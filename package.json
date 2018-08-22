@@ -1,6 +1,6 @@
 {
   "name": "beetle.js",
-  "version": "0.1.0",
+  "version": "4.0.0-alpha.01",
   "description": "JavaScript ORM, manage your data easily.",
   "main": "lib/index.js",
   "keywords": [
