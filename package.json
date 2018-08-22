@@ -1,0 +1,25 @@
+{
+  "name": "beetle.js",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Beetlejs/beetle.js.git"
+  },
+  "keywords": [
+    "javascript",
+    "data-management",
+    "linq",
+    "orm"
+  ],
+  "author": "Umut Özel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Beetlejs/beetle.js/issues"
+  },
+  "homepage": "https://github.com/Beetlejs/beetle.js#readme"
+}
