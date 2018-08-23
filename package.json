@@ -43,6 +43,6 @@
   },
   "homepage": "https://github.com/Beetlejs/beetle.js#readme",
   "dependencies": {
-    "jinqu": "^0.1.2"
+    "jinqu": "^0.1.3"
   }
 }
