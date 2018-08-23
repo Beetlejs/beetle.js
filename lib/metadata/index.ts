@@ -1,22 +1,22 @@
-import { IEntity } from "../types";
-import { EntityManager } from "../entity-manager";
+import { Entity } from "../types";
+import { EntityManagerBase } from "../entity-manager";
 
 export interface ValidationError {
     message: string;
-    entity: IEntity;
+    entity: Entity;
     property?: string;
     value?: any;
 }
 
 export interface EntityValidationError {
-    entity: IEntity;
+    entity: Entity;
     validationErrors: ValidationError[];
 }
 
 export interface ManagerValidationError extends Error {
-    entities: IEntity[];
+    entities: Entity[];
     entitiesInError: EntityValidationError[];
-    manager: EntityManager;
+    manager: EntityManagerBase;
 }
 
 export interface Validator {
@@ -26,11 +26,11 @@ export interface Validator {
 }
 
 export interface PropertyValidator extends Validator {
-    validate(value: any, entity: IEntity): string;
+    validate(value: any, entity: Entity): string;
 }
 
 export interface EntityValidator extends Validator {
-    validate(entity: IEntity): string;
+    validate(entity: Entity): string;
 }
 
 interface MetadataPart {
@@ -38,7 +38,7 @@ interface MetadataPart {
     displayName?: string;
 
     toString(): string;
-    validate(entity: IEntity): ValidationError[];
+    validate(entity: Entity): ValidationError[];
 }
 
 export interface Property extends MetadataPart {
@@ -79,19 +79,23 @@ export interface NavigationProperty extends Property {
     cascadeDelete: boolean;
     foreignKeyNames: string[];
     foreignKeys: DataProperty[];
-
     inverse?: NavigationProperty;
-    checkAssign(entity: IEntity);
 }
 
-export class EntityType {
-    dataProperties: DataProperty[] = [];
-    navigationProperties: NavigationProperty[] = [];
+export interface EntityType extends MetadataPart {
+    dataProperties: DataProperty[];
+    navigationProperties: NavigationProperty[];
+    shortName: string;
+    keys: string[];
+    baseTypeName: string;
+    metadataManager: MetadataManager;
+    properties: string[];
+    floorType: EntityType;
+    baseType: EntityType;
+    validators: EntityValidator[];
 
-    create() {
-        const o = {};
-        this.dataProperties.forEach(d => o[d.name] = d.defaultValue);
-        this.navigationProperties.forEach(n => o[n.name] = n.isScalar ? null : []);
-        return o;
-    }
+    create();
+}
+
+export class MetadataManager {
 }

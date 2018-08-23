@@ -1,4 +1,4 @@
-export interface IEntity {
+export interface Entity {
     $type: string;
 }
 
