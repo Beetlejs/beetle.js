@@ -7,9 +7,9 @@ export abstract class EntityManagerBase {
     mergeEntities(entities: Entity[]) {
     }
 
-    saveChanges(entries: EntityEntry[]) {
+    saveChanges() {
     }
 
-    saveEntities(entities: TrackedEntity[]) {
+    saveEntries(entries: EntityEntry[]) {
     }
 }

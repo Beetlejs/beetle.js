@@ -1,13 +1,27 @@
 import { IQueryProvider, IQueryPart, Query, QueryPart, PartArgument } from 'jinqu';
-import { IWebRequestOptions, RequestProvider } from "../types";
+import { IEntity } from '../types';
+
+export interface IWebRequestOptions {
+}
+
+export type QueryParameters = [{ key: string; value: string }];
+
+export interface IRequestProvider<TOptions extends IWebRequestOptions> {
+    call<T>(prms: QueryParameters, options: TOptions): Promise<IteratorResult<T>>
+}
 
 export interface BeetleQueryOptions extends IWebRequestOptions {
+    noTracking?: boolean;
 }
 
 export class BeetleQuery<T> extends Query<T> {
 
     withOptions(options: BeetleQueryOptions) {
         return this._create(QueryPart.create('options', [PartArgument.literal(options)]));
+    }
+
+    asNoTracking() {
+        return this._create(QueryPart.create('options', [PartArgument.literal({ noTracking: true })]));
     }
 
     private _create<TResult = T>(part: IQueryPart): BeetleQuery<TResult> {
@@ -17,7 +31,7 @@ export class BeetleQuery<T> extends Query<T> {
 
 export class BeetleQueryProvider implements IQueryProvider {
 
-    constructor(protected requestProvider: RequestProvider<BeetleQueryOptions>) {
+    constructor(protected requestProvider: IRequestProvider<BeetleQueryOptions>) {
     }
 
     createQuery<T>(parts?: IQueryPart[]) {
@@ -25,6 +39,36 @@ export class BeetleQueryProvider implements IQueryProvider {
     }
 
     execute<T = any, TResult = PromiseLike<T>>(parts: IQueryPart[]): TResult {
-        throw new Error('Not implemented');
+        let o: BeetleQueryOptions = {};
+
+        for (let p of parts) {
+        }
     }
 }
+
+function handle(part: QueryPart) {
+}
+
+class EntityBase {
+    static $type: string;
+}
+
+interface ITest {
+    createSet<T extends EntityBase>(type: typeof EntityBase & (new (...args) => T));
+    createSet<T extends IEntity>(type: string);
+}
+
+class Test implements ITest {
+    createSet<T extends EntityBase>(type: typeof EntityBase);
+    createSet<T extends IEntity>(type: string);
+    createSet(type: any) {
+    }
+}
+
+class Enti implements IEntity {
+    $type: string;
+    static $type = 'Enti';
+}
+
+const t = new Test();
+t.createSet<Enti>(Enti);

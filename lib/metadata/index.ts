@@ -1,30 +1,21 @@
-import { Entity } from "../types";
-import { EntityManagerBase } from "../entity-manager";
-
 export interface Property {
     name: string;
-    displayName?: string;
 }
 
-export interface DataTypeBase {
-    name: string;
-
-    toString(): string;
-    defaultValue(): any;
+export enum DataType {
+    number, string
 }
 
 export interface DataProperty extends Property {
-    dataType: DataTypeBase;
+    dataType: DataType;
     defaultValue: any;
-    useForConcurrency: boolean;
 }
 
 export interface NavigationProperty extends Property {
-    entityTypeName: string;
-    entityType: EntityType;
+    typeName: string;
+    type: EntityType;
     isScalar: boolean;
     associationName: string;
-    cascadeDelete: boolean;
     foreignKeyNames: string[];
     foreignKeys: DataProperty[];
     inverse?: NavigationProperty;
@@ -36,12 +27,10 @@ export interface EntityType extends Property {
     shortName: string;
     keys: string[];
     baseTypeName: string;
+    baseType: EntityType;
+    floorType: EntityType;
     metadataManager: MetadataManager;
     properties: string[];
-    floorType: EntityType;
-    baseType: EntityType;
-
-    create();
 }
 
 export class MetadataManager {

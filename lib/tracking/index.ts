@@ -1,3 +1,6 @@
+import { EntityType } from "../metadata";
+import { IEntity } from "../types";
+
 export enum EntityState {
     Detached = 0,
     Unchanged = 1,
@@ -7,17 +10,16 @@ export enum EntityState {
 }
 
 export class EntityEntry<T = any> {
-    state: EntityState;
-    originalValues: any;
-}
 
-export class EntityStore<T> {
-
-    constructor(public readonly type: string) {
-
+    constructor(public readonly entity: T, public readonly type: EntityType, public readonly state = EntityState.Added) {
+        this.originalValues = new Map();
     }
 
-    entries: EntityEntry[];
+    readonly originalValues: Map<string, any>;
+}
+
+export class EntityStore {
+    entities = new Map<string, IEntity>();
 }
 
 export interface TrackingInfo {
