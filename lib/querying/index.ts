@@ -1,5 +1,5 @@
 import { IQueryProvider, IQueryPart, Query, QueryPart, PartArgument } from 'jinqu';
-import { IWebRequestOptions, RequestProvider } from "../../types";
+import { IWebRequestOptions, RequestProvider } from "../types";
 
 export interface BeetleQueryOptions extends IWebRequestOptions {
 }

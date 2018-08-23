@@ -1,10 +1,10 @@
-import { IEntity } from "./types";
+import { Entity } from "./types";
 import { EntityEntry } from "./tracking";
 import { TrackedEntity } from "./tracking";
 
 export abstract class EntityManagerBase {
 
-    mergeEntities(entities: IEntity[]) {
+    mergeEntities(entities: Entity[]) {
     }
 
     saveChanges(entries: EntityEntry[]) {
