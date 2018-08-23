@@ -9,29 +9,57 @@ interface MetadataPart {
     validate(entity: IEntity): ValidationError[];
 }
 
-interface Property extends MetadataPart {
+export interface Property extends MetadataPart {
     owner: EntityType;
     isComplex: boolean;
     validators: PropertyValidator[];
 }
 
-export interface DataProperty extends Property {
+interface DataTypeBase {
     name: string;
-    displayName?: string;
-    defaultValue: any;
+
+    toString(): string;
+    isValid(value: any): boolean;
+    defaultValue(): any;
+    autoValue(): any;
 }
 
-export interface NavigationProperty {
-    name: string;
+export interface DataProperty extends Property {
+    dataType: DataTypeBase;
+    isNullable: boolean;
+    isKeyPart: boolean;
+    // generationPattern?: enums.generationPattern;
+    defaultValue: any;
+    useForConcurrency: boolean;
+    relatedNavigationProperties: NavigationProperty[];
+    isEnum: boolean;
+
+    isValid(value: any): boolean;
+    handle(value: any): any;
+    getDefaultValue(): any;
+}
+
+export interface NavigationProperty extends Property {
+    entityTypeName: string;
+    entityType: EntityType;
+    isScalar: boolean;
+    associationName: string;
+    cascadeDelete: boolean;
+    foreignKeyNames: string[];
+    foreignKeys: DataProperty[];
+
+    inverse?: NavigationProperty;
+    checkAssign(entity: IEntity);
 }
 
 export class EntityType {
-    dataProperties: DataProperty[];
-    navigationProperties: NavigationProperty[];
+    dataProperties: DataProperty[] = [];
+    navigationProperties: NavigationProperty[] = [];
 
     create() {
         const o = {};
         this.dataProperties.forEach(d => o[d.name] = d.defaultValue);
-        this.navigationProperties.forEach();
+        this.navigationProperties.forEach(n => o[n.name] = n.isScalar ? null : []);
+        return o;
     }
 }
