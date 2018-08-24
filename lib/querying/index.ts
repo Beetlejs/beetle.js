@@ -74,10 +74,10 @@ export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQu
 
 function handle(part: IQueryPart): QueryParameter {
     const args = part.args.map(a => expToStr(a.exp, a.scopes)).join(';');
-    return { key: '!' + part.type, value: args };
+    return { key: '$' + part.type, value: args };
 }
 
-function expToStr(exp: Expression, scopes: any[]) {
+function expToStr(exp: Expression, scopes: any[]): string {
     switch (exp.type) {
         case ExpressionType.Literal:
             return convertValue((exp as LiteralExpression).value);
@@ -86,15 +86,17 @@ function expToStr(exp: Expression, scopes: any[]) {
         case ExpressionType.Unary:
             const uexp = exp as UnaryExpression;
             return `${getUnaryOp(uexp.operator)}${expToStr(uexp.target, scopes)}`;
-        case ExpressionType.Group:
-            const gexp = exp as GroupExpression;
-            break;
         case ExpressionType.Object:
             const oexp = exp as ObjectExpression;
-            break;
-        case ExpressionType.Array:
-            const aexp = exp as ArrayExpression;
-            break;
+            const assigns = oexp.members.map(m => {
+                if (m.type === ExpressionType.Assign) {
+                    const ae = m as AssignExpression;
+                    return `${expToStr(ae.right, scopes)} as ${ae.name}`;
+                }
+
+                return m.name;
+            }).join(', ');
+            return `new (${assigns})`;
         case ExpressionType.Binary:
             const bexp = exp as BinaryExpression;
             return `${expToStr(bexp.left, scopes)} ${getBinaryOp(bexp.operator)} ${expToStr(bexp.right, scopes)}`;
@@ -106,13 +108,15 @@ function expToStr(exp: Expression, scopes: any[]) {
             return `${expToStr(iexp.owner, scopes)}[${expToStr(iexp.key, scopes)}]`;
         case ExpressionType.Func:
             const fexp = exp as FuncExpression;
-            break;
+            const a = {};
+            fexp.parameters.forEach(p => a[p] = readProp(p, scopes));
+            return expToStr(fexp.body, [a, ...scopes]);
         case ExpressionType.Call:
             const cexp = exp as CallExpression;
-            break;
+            return mapFunction(cexp, scopes);
         case ExpressionType.Ternary:
             const texp = exp as TernaryExpression;
-            break;
+            return `${expToStr(texp.predicate, scopes)} ? ${expToStr(texp.whenTrue, scopes)} : ${expToStr(texp.whenFalse, scopes)}`;
         default:
             throw new Error(`Unsupported expression type ${exp.type}`);
     }
@@ -130,10 +134,20 @@ function getUnaryOp(op: string) {
 }
 
 function readVar(exp: VariableExpression, scopes: any[]) {
-    const s = scopes.find(s => exp.name in s);
-    return s ? s[exp.name] : exp.name;
+    return readProp(exp.name, scopes);
+}
+
+function readProp(member: string, scopes: any[]) {
+    const s = scopes.find(s => member in s);
+    return s ? s[member] : member;
 }
 
 function convertValue(value) {
     return value;
 }
+
+function mapFunction(call: CallExpression, scopes: any[]) {
+    const callee = expToStr(call.callee, scopes);
+    const args = call.args.map(a => expToStr(a, scopes)).join(', ');
+    return `${callee}(${args})`;
+} 
