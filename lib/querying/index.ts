@@ -24,7 +24,7 @@ export interface WebRequestOptions {
 }
 
 export interface IRequestProvider<TOptions extends WebRequestOptions> {
-    call<T>(prms: QueryParameter[], options: TOptions): PromiseLike<IteratorResult<T>>
+    call<T>(prms: QueryParameter[], options: TOptions): PromiseLike<T[]>
 }
 
 export interface BeetleQueryOptions extends WebRequestOptions {
@@ -47,6 +47,10 @@ export class BeetleQuery<T> extends Query<T> {
     }
 }
 
+const orderFuncs = [QueryFunc.orderBy, QueryFunc.orderByDescending];
+const thenFuncs = [QueryFunc.thenBy, QueryFunc.thenByDescending];
+const descFuncs = [QueryFunc.orderByDescending, QueryFunc.thenByDescending];
+
 export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQueryProvider {
 
     constructor(protected requestProvider: IRequestProvider<TOptions>) {
@@ -56,7 +60,7 @@ export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQu
         return new Query<T>(this, parts);
     }
 
-    execute<T = any, TResult = PromiseLike<IteratorResult<T>>>(parts: IQueryPart[]): TResult {
+    execute<T = any, TResult = PromiseLike<T[]>>(parts: IQueryPart[]): TResult {
         const prms: QueryParameter[] = [];
         let o = {};
 
@@ -64,17 +68,17 @@ export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQu
             if (p.type === WebFunc.options) {
                 o = Object.assign(o, p.args[0].literal);
             } else {
-                prms.push(handle(p));
+                prms.push(this.handlePart(p));
             }
         }
 
         return <TResult><any>this.requestProvider.call<T>(prms, <TOptions>o);
     }
-}
 
-function handle(part: IQueryPart): QueryParameter {
-    const args = part.args.map(a => expToStr(a.exp, a.scopes)).join(';');
-    return { key: '$' + part.type, value: args };
+    handlePart(part: IQueryPart): QueryParameter {
+        const args = part.args.map(a => expToStr(a.exp, a.scopes)).join(';');
+        return { key: '$' + part.type, value: args };
+    }
 }
 
 function expToStr(exp: Expression, scopes: any[]): string {

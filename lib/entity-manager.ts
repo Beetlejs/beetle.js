@@ -17,10 +17,9 @@ export abstract class EntityManagerBase<TOptions extends IWebRequestOptions> {
     }
 
     private doRequest(prms: QueryParameters, options: TOptions) {
-        this.requestProvider.call(prms, options)
+        return this.requestProvider.call(prms, options)
             .then(
-                d => this.mergeEntities(<any>d),
-                
+                d => this.mergeEntities(<any>d)
             );
     }
 }

@@ -3,7 +3,7 @@ export interface Property {
 }
 
 export enum DataType {
-    number, string
+    number, string, boolean, date
 }
 
 export interface DataProperty extends Property {
