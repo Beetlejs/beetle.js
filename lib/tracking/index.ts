@@ -30,3 +30,28 @@ export interface TrackingInfo {
 export interface TrackedEntity {
     tracking: TrackingInfo;
 }
+
+
+class EntityBase {
+    static $type: string;
+}
+
+interface ITest {
+    createSet<T extends EntityBase>(type: typeof EntityBase & (new (...args) => T));
+    createSet<T extends IEntity>(type: string);
+}
+
+class Test implements ITest {
+    createSet<T extends EntityBase>(type: typeof EntityBase);
+    createSet<T extends IEntity>(type: string);
+    createSet(type: any) {
+    }
+}
+
+class Enti implements IEntity {
+    $type: string;
+    static $type = 'Enti';
+}
+
+const t = new Test();
+t.createSet<Enti>(Enti);
