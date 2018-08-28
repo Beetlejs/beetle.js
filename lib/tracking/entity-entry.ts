@@ -35,12 +35,12 @@ export class EntityEntry<T extends IEntity = any> {
 
     readonly key: string;
 
-    saved(values?: { key: keyof T, value }) {
-        this.overwrite(values);
-        this.state = EntityState.Unchanged;
-    }
-    
-    overwrite(values?: { key: keyof T, value }) {
+    overwrite(values?: { key: keyof T, value }, state?: EntityState) {
+        if (!values) return;
+
+        for (let p in values) {
+
+        }
     }
 
     clearNavigations() {
@@ -56,7 +56,7 @@ function getOriginalValues(entity, type: EntityType) {
     } else {
         for (let p in entity) {
             const v = entity[p];
-            if (v == null || v !== Object(v)) {
+            if (v == null || v instanceof Date || v !== Object(v)) {
                 m[p] = v;
             }
         }

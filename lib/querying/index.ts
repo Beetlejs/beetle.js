@@ -40,6 +40,18 @@ export class BeetleQuery<T> extends Query<T> {
     asNoTracking() {
         return this.create(QueryPart.create(WebFunc.options, [PartArgument.literal({ noTracking: true })]));
     }
+
+    toArray(): T[] {
+        throw new Error('Synchronous execution is not supported');
+    }
+
+    toArrayAsync() {
+        return this.provider.execute<T, PromiseLike<T[]>>(this.parts);
+    }
+
+    then<TError = never>(onfulfilled: (value: T[]) => T[] | PromiseLike<T[]>, onrejected?: ((reason: any) => TError | PromiseLike<TError>)): PromiseLike<T[] | TError> {
+        return this.toArrayAsync().then(onfulfilled, onrejected);
+    }
 }
 
 export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQueryProvider {
