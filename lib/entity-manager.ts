@@ -1,25 +1,18 @@
 import { IEntity } from "./types";
 import { EntityEntry } from "./tracking";
-import { IRequestProvider, IWebRequestOptions, QueryParameters } from './querying';
+import { IRequestProvider } from './querying';
 
-export abstract class EntityManagerBase<TOptions extends IWebRequestOptions> {
+export abstract class Context {
 
-    constructor(private readonly requestProvider: IRequestProvider<TOptions>) {
+    constructor() {
     }
 
-    mergeEntities(entities: IteratorResult<IEntity> | IEntity) {
+    private mergeEntities(entities: IteratorResult<IEntity> | IEntity) {
     }
 
     saveChanges() {
     }
 
     saveEntries(entries: EntityEntry[]) {
-    }
-
-    private doRequest(prms: QueryParameters, options: TOptions) {
-        return this.requestProvider.call(prms, options)
-            .then(
-                d => this.mergeEntities(<any>d)
-            );
     }
 }

@@ -24,7 +24,7 @@ export interface WebRequestOptions {
 }
 
 export interface IRequestProvider<TOptions extends WebRequestOptions> {
-    call<T>(prms: QueryParameter[], options: TOptions): PromiseLike<T[]>
+    call<TResult>(prms: QueryParameter[], options: TOptions[]): TResult;
 }
 
 export interface BeetleQueryOptions extends WebRequestOptions {
@@ -34,22 +34,13 @@ export interface BeetleQueryOptions extends WebRequestOptions {
 export class BeetleQuery<T> extends Query<T> {
 
     withOptions(options: BeetleQueryOptions) {
-        return this._create(QueryPart.create(WebFunc.options, [PartArgument.literal(options)]));
+        return this.create(QueryPart.create(WebFunc.options, [PartArgument.literal(options)]));
     }
 
     asNoTracking() {
-        return this._create(QueryPart.create(WebFunc.options, [PartArgument.literal({ noTracking: true })]));
-    }
-
-    // todo: jinqu update sonrası silinecek
-    private _create<TResult = T>(part: IQueryPart): BeetleQuery<TResult> {
-        return <any>this.provider.createQuery([...this.parts, part]);
+        return this.create(QueryPart.create(WebFunc.options, [PartArgument.literal({ noTracking: true })]));
     }
 }
-
-const orderFuncs = [QueryFunc.orderBy, QueryFunc.orderByDescending];
-const thenFuncs = [QueryFunc.thenBy, QueryFunc.thenByDescending];
-const descFuncs = [QueryFunc.orderByDescending, QueryFunc.thenByDescending];
 
 export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQueryProvider {
 
@@ -62,17 +53,17 @@ export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQu
 
     execute<T = any, TResult = PromiseLike<T[]>>(parts: IQueryPart[]): TResult {
         const prms: QueryParameter[] = [];
-        let o = {};
+        let os: TOptions[] = [];
 
         for (let p of parts) {
             if (p.type === WebFunc.options) {
-                o = Object.assign(o, p.args[0].literal);
+                os.push(p.args[0].literal);
             } else {
                 prms.push(this.handlePart(p));
             }
         }
 
-        return <TResult><any>this.requestProvider.call<T>(prms, <TOptions>o);
+        return this.requestProvider.call<TResult>(prms, os);
     }
 
     handlePart(part: IQueryPart): QueryParameter {
@@ -90,6 +81,9 @@ function expToStr(exp: Expression, scopes: any[]): string {
         case ExpressionType.Unary:
             const uexp = exp as UnaryExpression;
             return `${getUnaryOp(uexp.operator)}${expToStr(uexp.target, scopes)}`;
+        case ExpressionType.Group:
+            const gexp = exp as GroupExpression;
+            return `(${gexp.expressions.map(e => expToStr(e, scopes)).join(', ')})`;
         case ExpressionType.Object:
             const oexp = exp as ObjectExpression;
             const assigns = oexp.members.map(m => {
@@ -101,6 +95,9 @@ function expToStr(exp: Expression, scopes: any[]): string {
                 return m.name;
             }).join(', ');
             return `new (${assigns})`;
+        case ExpressionType.Array:
+            const aexp = exp as ArrayExpression;
+            return `new [${aexp.items.map(e => expToStr(e, scopes)).join(', ')}]`;
         case ExpressionType.Binary:
             const bexp = exp as BinaryExpression;
             return `${expToStr(bexp.left, scopes)} ${getBinaryOp(bexp.operator)} ${expToStr(bexp.right, scopes)}`;
