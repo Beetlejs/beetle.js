@@ -6,9 +6,10 @@ import {
     BinaryExpression, MemberExpression, IndexerExpression, FuncExpression,
     CallExpression, TernaryExpression
 } from 'jokenizer';
-import { WebRequestOptions, IRequestProvider, QueryParameter, BeetleQuery, WebFunc } from ".";
+import { WebRequestOptions, IRequestProvider, QueryParameter, WebFunc } from "../types";
+import { BeetleQuery } from "./beetle-query";
 
-export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQueryProvider {
+export class BeetleQueryProvider<TOptions extends WebRequestOptions> implements IQueryProvider {
 
     constructor(protected requestProvider: IRequestProvider<TOptions>) {
     }
@@ -18,6 +19,10 @@ export class WebQueryProvider<TOptions extends WebRequestOptions> implements IQu
     }
 
     execute<T = any, TResult = PromiseLike<T[]>>(parts: IQueryPart[]): TResult {
+        throw new Error('Synchronous execution is not supported');
+    }
+
+    executeAsync<T = any, TResult = T[]>(parts: IQueryPart[]): PromiseLike<TResult> {
         const prms: QueryParameter[] = [];
         let os: TOptions[] = [];
 
