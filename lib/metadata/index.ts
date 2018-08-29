@@ -33,6 +33,7 @@ export interface EntityType extends Property {
     properties: string[];
 }
 
-export class MetadataManager {
+export interface MetadataManager {
     types: EntityType[];
+    getType(type: string): EntityType;
 }

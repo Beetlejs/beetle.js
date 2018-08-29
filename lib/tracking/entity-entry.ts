@@ -28,14 +28,14 @@ export class EntityEntry<T extends IEntity = any> {
         this.state = value;
     }
     
-    private _originalValues: Map<keyof T, any>;
+    private _originalValues: Map<string, any>;
     get originalValues() {
         return this._originalValues;
     }
 
     readonly key: string;
 
-    overwrite(values?: { key: keyof T, value }, state?: EntityState) {
+    overwrite(values?: any, state?: EntityState) {
         if (!values) return;
 
         for (let p in values) {
