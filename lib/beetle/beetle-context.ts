@@ -28,13 +28,13 @@ export class BeetleContext extends Context {
                 if (o.merge !== MergeStrategy.NoTracking) {
                     this.mergeEntities(<any>d);
                 }
-                
+
                 return d;
             });
     }
 
     private mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]): BeetleQueryOptions {
-        let opt: WebRequestOptions = {};
+        let opt: BeetleQueryOptions = {};
         let body = {};
 
         options.forEach(o => {
