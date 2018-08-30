@@ -44,6 +44,6 @@
   "homepage": "https://github.com/Beetlejs/beetle.js#readme",
   "dependencies": {
     "circular-ref-fix": "^1.0.1",
-    "jinqu": "^0.1.5"
+    "jinqu": "^0.1.7"
   }
 }
