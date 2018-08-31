@@ -1,5 +1,5 @@
-import { IEntity, SaveResult, IAjaxProvider } from "./types";
-import { EntityEntry, EntityStore, EntityState, TrackedEntity } from "./tracking";
+import { IEntity, SaveResult } from "./types";
+import { EntityEntry, EntityStore, EntityState } from "./tracking";
 import { MetadataManager, NavigationProperty } from "./metadata";
 import { MergeStrategy } from "./tracking/merge-strategy";
 
@@ -69,7 +69,7 @@ export abstract class Context {
         this.mergeEntities(entity);
     }
 
-    saveChanges(): PromiseLike<SaveResult> {
+    getChanges(): EntityEntry[] {
         const changes = [];
 
         this._stores.forEach(s => {
@@ -80,7 +80,11 @@ export abstract class Context {
             });
         });
 
-        return this.saveEntries(changes);
+        return changes;
+    }
+
+    saveChanges(): PromiseLike<SaveResult> {
+        return this.saveEntries(this.getChanges());
     }
 
     abstract saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult>;
