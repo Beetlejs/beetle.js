@@ -1,10 +1,12 @@
 import createRefs = require('circular-ref-fix');
+import { Ctor } from 'jinqu';
 import { Context } from "../context";
-import { IEntity, QueryParameter, IAjaxProvider, BeetleQueryOptions, SaveResult } from "../types";
+import { IEntity, QueryParameter, IAjaxProvider, BeetleQueryOptions, SaveResult, EntityBase } from "../types";
 import { MetadataManager } from "../metadata";
 import { EntitySet } from "./entity-set";
 import { MergeStrategy } from "../tracking/merge-strategy";
 import { EntityEntry, EntityState } from "../tracking";
+import { getTypeName } from '../helper';
 
 export class BeetleContext extends Context {
 
@@ -14,11 +16,13 @@ export class BeetleContext extends Context {
 
     private _sets: Map<string, EntitySet<any>>;
 
-    set<T extends IEntity>(type: string): EntitySet<T> {
-        if (this._sets.has(type))
-            return this._sets[type] = new EntitySet<T>(this.store<T>(type), { call: this.call });
+    set<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string): EntitySet<T> {
+        const t = getTypeName(type);
+        
+        if (this._sets.has(t))
+            return this._sets[t] = new EntitySet<T>(this.store<T>(t), { call: this.call });
 
-        return this._sets[type];
+        return this._sets[t];
     }
 
     private call<TResult>(params: QueryParameter[], options: BeetleQueryOptions[]): PromiseLike<TResult> {
@@ -33,7 +37,7 @@ export class BeetleContext extends Context {
             });
     }
 
-    private mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]): BeetleQueryOptions {
+    protected mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]): BeetleQueryOptions {
         params = params || [];
         let opt: BeetleQueryOptions = {};
         let body = {};

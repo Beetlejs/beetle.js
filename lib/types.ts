@@ -4,6 +4,11 @@ export interface IEntity {
     $type: string;
 }
 
+export class EntityBase implements IEntity {
+    $type: string;
+    static $type: string;
+}
+
 export type QueryParameter = { key: string; value: string };
 
 export const WebFunc = {

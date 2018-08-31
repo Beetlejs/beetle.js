@@ -1,7 +1,9 @@
-import { IEntity, SaveResult } from "./types";
+import { Ctor } from "jinqu";
+import { IEntity, SaveResult, EntityBase } from "./types";
 import { EntityEntry, EntityStore, EntityState } from "./tracking";
 import { MetadataManager, NavigationProperty } from "./metadata";
 import { MergeStrategy } from "./tracking/merge-strategy";
+import { getTypeName } from './helper';
 
 export abstract class Context {
 
@@ -11,10 +13,12 @@ export abstract class Context {
 
     private _stores: Map<string, EntityStore<any>>;
 
-    protected store<T extends IEntity>(type: string): EntityStore<T> {
-        if (this._stores.has(type))
-            return this._stores[type] = new EntityStore<T>(this.metadata.getType(type));
-        return this._stores[type];
+    protected store<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string): EntityStore<T> {
+        const t = getTypeName(type);
+        
+        if (this._stores.has(t))
+            return this._stores[t] = new EntityStore<T>(this.metadata.getType(t));
+        return this._stores[t];
     }
 
     protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
@@ -63,7 +67,6 @@ export abstract class Context {
     }
 
     configure() {
-
     }
 
     add(entity: IEntity) {
