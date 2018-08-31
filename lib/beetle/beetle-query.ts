@@ -1,7 +1,6 @@
 import { QueryPart, Query, PartArgument } from "jinqu";
 import { MergeStrategy } from "../tracking/merge-strategy";
-import { BeetleQueryOptions } from "./beetle-query-options";
-import { WebFunc } from "../types";
+import { WebFunc, BeetleQueryOptions } from "../types";
 
 export class BeetleQuery<T> extends Query<T> {
 
