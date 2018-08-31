@@ -4,7 +4,7 @@ import { IEntity, QueryParameter, IAjaxProvider, BeetleQueryOptions, SaveResult 
 import { MetadataManager } from "../metadata";
 import { EntitySet } from "./entity-set";
 import { MergeStrategy } from "../tracking/merge-strategy";
-import { EntityEntry } from "../tracking";
+import { EntityEntry, EntityState } from "../tracking";
 
 export class BeetleContext extends Context {
 
@@ -26,7 +26,7 @@ export class BeetleContext extends Context {
         return this.ajaxProvider.doAjax<TResult>(o)
             .then(d => {
                 if (o.merge !== MergeStrategy.NoTracking) {
-                    this.mergeEntities(<any>d);
+                    this.mergeEntities(<any>d, EntityState.Unchanged, o.merge);
                 }
 
                 return d;

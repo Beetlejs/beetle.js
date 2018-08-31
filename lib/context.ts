@@ -5,7 +5,8 @@ import { MergeStrategy } from "./tracking/merge-strategy";
 
 export abstract class Context {
 
-    constructor(protected readonly metadata: MetadataManager) {
+    constructor(protected readonly metadata?: MetadataManager) {
+        this.configure()
     }
 
     private _stores: Map<string, EntityStore<any>>;
@@ -59,6 +60,10 @@ export abstract class Context {
     }
 
     protected fixNavigation(entry: EntityEntry, navigation: NavigationProperty) {
+    }
+
+    configure() {
+
     }
 
     add(entity: IEntity) {
