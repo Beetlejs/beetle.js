@@ -9,15 +9,15 @@ import { getKey } from "../helper";
 export class EntityStore<T extends IEntity> {
 
     constructor(private readonly type?: EntityType) {
+        this.entities = [];
         this.entries = new Map<string, EntityEntry<T>>();
         this.allEntries = new Set<EntityEntry<T>>();
-        this.entities = [];
         this.local = this.entities.asQueryable();
     }
 
-    private readonly entries: Map<string, EntityEntry<T>>;
-    private readonly allEntries: Set<EntityEntry<T>>;
     private readonly entities: Array<T>;
+    public readonly entries: Map<string, EntityEntry<T>>;
+    public readonly allEntries: Set<EntityEntry<T>>;
     public readonly local: IQuery<T>;
 
     getByKey(key: string) {
@@ -42,11 +42,11 @@ export class EntityStore<T extends IEntity> {
                 return entry;
             }
 
-            entry = new EntityEntry(this, entity, this.type, state);
+            entry = new EntityEntry(entity, state, this.type, this);
             this.entries[key] = entry;
         }
         else {
-            entry = new EntityEntry(this, entity, this.type, state);
+            entry = new EntityEntry(entity, state, this.type, this);
         }
 
         this.allEntries.add(entry);

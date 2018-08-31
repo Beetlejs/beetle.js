@@ -1,3 +1,5 @@
+import { MergeStrategy } from "./tracking/merge-strategy";
+
 export interface IEntity {
     $type: string;
 }
@@ -19,14 +21,18 @@ export interface WebRequestOptions {
     headers?: { [key: string]: string };
 }
 
-export interface IQueryProvider<TOptions extends WebRequestOptions> {
-    call<TResult>(prms: QueryParameter[], options: TOptions[]): PromiseLike<TResult>;
+export interface BeetleQueryOptions extends WebRequestOptions {
+    merge?: MergeStrategy;
 }
 
-export interface IRequestProvider {
-    call<TResult>(options: WebRequestOptions): PromiseLike<TResult>;
+export interface IRequestProvider<TOptions extends WebRequestOptions> {
+    call<TResult>(prms: QueryParameter[], options: TOptions[]): PromiseLike<TResult>;
 }
 
 export interface IAjaxProvider {
     doAjax<TResult>(options: WebRequestOptions): PromiseLike<TResult>;
+}
+
+export interface SaveResult {
+    affectedCount: number;
 }

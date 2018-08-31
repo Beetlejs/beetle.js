@@ -1,9 +1,10 @@
+import createRefs = require('circular-ref-fix');
 import { Context } from "../context";
-import { IEntity, QueryParameter, IAjaxProvider } from "../types";
-import { BeetleQueryOptions } from "./beetle-query-options";
+import { IEntity, QueryParameter, IAjaxProvider, BeetleQueryOptions, SaveResult } from "../types";
 import { MetadataManager } from "../metadata";
 import { EntitySet } from "./entity-set";
 import { MergeStrategy } from "../tracking/merge-strategy";
+import { EntityEntry } from "../tracking";
 
 export class BeetleContext extends Context {
 
@@ -55,5 +56,21 @@ export class BeetleContext extends Context {
         opt.body = body;
 
         return opt;
+    }
+
+    saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult> {
+        if (!entries || !entries.length)
+            return Promise.resolve<SaveResult>({ affectedCount: 0 });
+        
+        const pkg = entries.map(e => Object.assign(e.getTrackingInfo(), e.entity));
+        const safePkg = createRefs(pkg);
+
+        return this.ajaxProvider.doAjax({
+            body: safePkg,
+            contentType: 'application/json',
+            dataType: 'json',
+            method: 'POST',
+            url: 'SaveChanges'
+        });
     }
 }

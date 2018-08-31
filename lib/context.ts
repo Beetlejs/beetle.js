@@ -1,6 +1,7 @@
-import { IEntity } from "./types";
-import { EntityEntry, EntityStore, EntityState } from "./tracking";
-import { MetadataManager } from "./metadata";
+import { IEntity, SaveResult, IAjaxProvider } from "./types";
+import { EntityEntry, EntityStore, EntityState, TrackedEntity } from "./tracking";
+import { MetadataManager, NavigationProperty } from "./metadata";
+import { MergeStrategy } from "./tracking/merge-strategy";
 
 export abstract class Context {
 
@@ -14,25 +15,73 @@ export abstract class Context {
             return this._stores[type] = new EntityStore<T>(this.metadata.getType(type));
         return this._stores[type];
     }
-    
-    protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged) {
-        if (!entities) return;
 
-        if (!(entities instanceof Array)) {
-            entities = [entities];
+    protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
+
+        function mg(es: IEntity[] | IEntity, s: EntityState, m: MergeStrategy) {
+            if (!es) return;
+
+            if (!(es instanceof Array)) {
+                es = [es];
+            }
+
+            for (const e of es) {
+                if (e.$type) {
+                    const store = this.store(e.$type);
+                    store.merge(e, state, merge);
+                }
+
+                for (let k of Object.keys(e)) {
+                    const v = e[k];
+                    if (!(v instanceof Date) && v !== Object(v)) {
+                        mg(v, s, m);
+                    }
+                }
+            }
         }
 
-        for (const entity of entities) {
-            if (!entity.$type)
-                throw new Error('Cannot merge an entity without $type information');
-
-            const store = this.store(entity.$type);
-        }
+        mg(entities, state, merge);
+        this.fixNavigations();
     }
 
-    saveChanges() {
+    protected fixNavigations() {
+        this._stores.forEach(s => {
+            for (let e of s.allEntries) {
+                this.fixEntryNavigations(e);
+            }
+        });
     }
 
-    saveEntries(entries: EntityEntry[]) {
+    protected fixEntryNavigations(entry: EntityEntry) {
+        if (entry.type == null) return;
+
+        entry.type.navigationProperties.forEach(n => this.fixNavigation(entry, n));
     }
+
+    protected fixNavigation(entry: EntityEntry, navigation: NavigationProperty) {
+    }
+
+    add(entity: IEntity) {
+        this.mergeEntities(entity, EntityState.Added);
+    }
+
+    attach(entity: IEntity) {
+        this.mergeEntities(entity);
+    }
+
+    saveChanges(): PromiseLike<SaveResult> {
+        const changes = [];
+
+        this._stores.forEach(s => {
+            s.allEntries.forEach(e => {
+                if (e.isChanged()) {
+                    changes.push(e);
+                }
+            });
+        });
+
+        return this.saveEntries(changes);
+    }
+
+    abstract saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult>;
 }
