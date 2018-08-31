@@ -16,7 +16,7 @@ export class BeetleContext extends Context {
 
     set<T extends IEntity>(type: string): EntitySet<T> {
         if (this._sets.has(type))
-            return this._sets[type] = new EntitySet<T>(this.store<T>(type).local, { call: this.call });
+            return this._sets[type] = new EntitySet<T>(this.store<T>(type), { call: this.call });
 
         return this._sets[type];
     }
