@@ -19,7 +19,7 @@ export interface WebRequestOptions {
     url?: string;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
     params?: QueryParameter[];
-    body?: any;
+    data?: any;
     dataType?: string;
     contentType?: string;
     timeout?: number;

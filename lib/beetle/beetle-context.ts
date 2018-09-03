@@ -40,7 +40,7 @@ export class BeetleContext extends Context {
     protected mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]): BeetleQueryOptions {
         params = params || [];
         let opt: BeetleQueryOptions = {};
-        let body = {};
+        let data = {};
 
         if (options) {
             options.forEach(o => {
@@ -48,8 +48,8 @@ export class BeetleContext extends Context {
                     params = params.concat(o.params);
                 }
 
-                if (o.body) {
-                    body = Object.assign(body, o.body);
+                if (o.data) {
+                    data = Object.assign(data, o.data);
                 }
 
                 opt = Object.assign(opt, o);
@@ -57,7 +57,7 @@ export class BeetleContext extends Context {
         }
 
         opt.params = params;
-        opt.body = body;
+        opt.data = data;
 
         return opt;
     }
@@ -70,7 +70,7 @@ export class BeetleContext extends Context {
         const safePkg = createRefs(pkg);
 
         return this.ajaxProvider.doAjax({
-            body: safePkg,
+            data: safePkg,
             contentType: 'application/json',
             dataType: 'json',
             method: 'POST',
