@@ -12,6 +12,7 @@ export class NavigationProperty {
             ? this._type
             : (this._type = this.owner.metadata.getType(this.typeName));
     }
+    
     isScalar: boolean = true;
     foreignKeyNames: string[] = [];
     associationName: string;
