@@ -7,3 +7,9 @@ export class DataProperty {
     
     defaultValue: any;
 }
+
+export class DataPropertyBuilder {
+
+    constructor(public readonly property: DataProperty) {
+    }
+}

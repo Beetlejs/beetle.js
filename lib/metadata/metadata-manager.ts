@@ -1,5 +1,5 @@
 import { Ctor } from "jinqu";
-import { EntityType } from "./entity-type";
+import { EntityType, EntityBuilder } from "./entity-type";
 import { IEntity, EntityBase } from "../types";
 import { getTypeName } from "../helper";
 
@@ -31,10 +31,22 @@ export class MetadataBuilder {
     }
     
     entity<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string) {
-        const t = getTypeName(type);
+        let t, jst;
+        if (typeof type === 'string') {
+            t = type;
+        }
+        else {
+            t = type.$type;
+            jst = type;
+        }
+    
+        
         let et = this.metadata.getType(t);
         if (!et) {
             et = new EntityType(this.metadata, t);
         }
+        et.jsType = jst;
+
+        return new EntityBuilder(et);
     }
 }
