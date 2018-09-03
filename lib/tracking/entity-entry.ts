@@ -70,6 +70,27 @@ export class EntityEntry<T extends IEntity = any> {
         });
     }
 
+    detectChanges() {
+        if (this.state !== EntityState.Unchanged) return;
+        
+        if (this.type) {
+            for (let dp of this.type.dataProperties.values()) {
+                if (this.entity[dp.name] !== this.originalValues[dp.name]) {
+                    this.state = EntityState.Modified;
+                    return;
+                }
+            }
+        }
+        else {
+            for (let [k, v] of this.originalValues.entries()) {
+                if (this.entity[k] !== v) {
+                    this.state = EntityState.Modified;
+                    return;
+                }
+            }
+        }
+    }
+
     getTrackingInfo(): TrackingInfo {
         return {
             state: this.state,

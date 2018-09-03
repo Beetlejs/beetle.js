@@ -77,22 +77,24 @@ export abstract class Context {
         this.mergeEntities(entity);
     }
 
-    getChanges(): EntityEntry[] {
-        const changes = [];
+    detectChanges() {
+        const changes: EntityEntry[] = [];
 
-        this._stores.forEach(s => {
-            s.allEntries.forEach(e => {
+        for (let s of this._stores.values()) {
+            for (let e of s.allEntries) {
+                e.detectChanges();
+                
                 if (e.isChanged()) {
                     changes.push(e);
                 }
-            });
-        });
+            }
+        }
 
         return changes;
     }
 
     saveChanges(): PromiseLike<SaveResult> {
-        return this.saveEntries(this.getChanges());
+        return this.saveEntries(this.detectChanges());
     }
 
     abstract saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult>;
