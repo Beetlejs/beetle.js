@@ -39,6 +39,6 @@ export interface IAjaxProvider {
 }
 
 export interface SaveResult {
-    affectedCount: number;
-    updatedEntities: Array<{index: number, values: any}>;
+    affectedCount?: number;
+    updatedEntities?: Array<{index: number, values: any}>;
 }
