@@ -44,6 +44,7 @@ export class MetadataBuilder {
         let et = this.metadata.getType(t);
         if (!et) {
             et = new EntityType(this.metadata, t);
+            this.metadata.addType(et);
         }
         et.jsType = jst;
 
