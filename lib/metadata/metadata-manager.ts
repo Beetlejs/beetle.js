@@ -4,7 +4,7 @@ import { IEntity, EntityBase } from "../types";
 import { getTypeName } from "../helper";
 
 export class MetadataManager {
-    private types: Map<string, EntityType>;
+    private types: Map<string, EntityType> = new Map();
 
     getType(type: string): EntityType {
         return this.types.get(type);
@@ -17,23 +17,24 @@ export class MetadataManager {
 
 export class MetadataBuilder {
 
-    constructor(private metadata: MetadataManager) {
+    constructor(private readonly metadata: MetadataManager) {
     }
 
     private type(type: string) {
-        if (!this.metadata.getType(type)) {
-            const et = new EntityType();
+        let et = this.metadata.getType(type);
+        if (!et) {
+            et = new EntityType(this.metadata, type);
             this.metadata.addType(et);
-
-            return et;
         }
+
+        return et;
     }
     
-    entity<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string) {
+    entity<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string) {
         const t = getTypeName(type);
         let et = this.metadata.getType(t);
         if (!et) {
-            et = new EntityType();
+            et = new EntityType(this.metadata, t);
         }
     }
 }

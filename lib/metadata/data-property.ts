@@ -1,4 +1,9 @@
+import { EntityType } from "./entity-type";
+
 export class DataProperty {
-    name: string;
+
+    constructor(public readonly owner: EntityType, public readonly name: string) {
+    }
+    
     defaultValue: any;
 }

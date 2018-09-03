@@ -10,14 +10,16 @@ export function getKey(entity, type: EntityType) {
     return k ? String(k) : null;
 }
 
-export function getTypeName<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string) {
+export function getTypeName<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string) {
     if (typeof type === 'string') return type;
 
-    if ('$type' in type) return type.$type;
-
-    return getClassName(type);
+    return type.$type;
 }
 
 export function getClassName<T>(type: Ctor<T>) {
     return type.constructor.name;
+}
+
+export function getForeignKey() {
+
 }

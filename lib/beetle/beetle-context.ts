@@ -16,13 +16,13 @@ export class BeetleContext extends Context {
 
     private _sets: Map<string, EntitySet<any>>;
 
-    set<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string): EntitySet<T> {
+    set<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntitySet<T> {
         const t = getTypeName(type);
-        
-        if (this._sets.has(t))
-            return this._sets[t] = new EntitySet<T>(this.store<T>(t), { call: this.call });
 
-        return this._sets[t];
+        if (this._sets.has(t))
+            return this._sets[t];
+
+        return this._sets[t] = new EntitySet<T>(this.store<T>(t), { call: this.call });
     }
 
     private call<TResult>(params: QueryParameter[], options: BeetleQueryOptions[]): PromiseLike<TResult> {
@@ -65,7 +65,7 @@ export class BeetleContext extends Context {
     saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult> {
         if (!entries || !entries.length)
             return Promise.resolve<SaveResult>({ affectedCount: 0 });
-        
+
         const pkg = entries.map(e => Object.assign(e.getTrackingInfo(), e.entity));
         const safePkg = createRefs(pkg);
 

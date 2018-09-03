@@ -13,10 +13,10 @@ export abstract class Context {
 
     private _stores: Map<string, EntityStore<any>>;
 
-    protected store<T extends IEntity>(type: (typeof EntityBase) | Ctor<T> | string): EntityStore<T> {
+    protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T> {
         const t = getTypeName(type);
         
-        if (this._stores.has(t))
+        if (!this._stores.has(t))
             return this._stores[t] = new EntityStore<T>(this.metadata.getType(t));
         return this._stores[t];
     }
@@ -31,10 +31,10 @@ export abstract class Context {
             }
 
             for (const e of es) {
-                if (e.$type) {
-                    const store = this.store(e.$type);
-                    store.merge(e, state, merge);
-                }
+                if (!e.$type) continue;
+                    
+                const store = this.store(e.$type);
+                store.merge(e, state, merge);
 
                 for (let k of Object.keys(e)) {
                     const v = e[k];
