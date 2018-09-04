@@ -5,7 +5,6 @@ import { getKey } from '../helper';
 
 export interface EntityEntryEvents {
     stateChanged?: (entry: EntityEntry, oldState: EntityState) => void;
-    keyChanged?: (entry: EntityEntry, oldKey: string) => void;
 }
 
 export class EntityEntry<T extends IEntity = any> {
@@ -13,7 +12,7 @@ export class EntityEntry<T extends IEntity = any> {
     constructor(public readonly entity: T, state = EntityState.Added,
                 public readonly type?: EntityType, private callbacks?: EntityEntryEvents) {
         this._key = getKey(entity, type);
-        this._state = state;
+        this.state = state;
     }
 
     private _state: EntityState;
@@ -29,6 +28,10 @@ export class EntityEntry<T extends IEntity = any> {
 
         const os = this.state;
         this.state = value;
+        
+        if (this.callbacks.stateChanged) {
+            this.callbacks.stateChanged(this, os);
+        }
     }
 
     private _originalValues: Map<string, any>;
@@ -45,15 +48,23 @@ export class EntityEntry<T extends IEntity = any> {
         return this._state !== EntityState.Detached && this._state !== EntityState.Unchanged;
     }
 
-    overwrite(values?: any, state?: EntityState) {
+    overwrite(values?) {
+        this.merge(values);
+    }
+
+    accept(values?) {
+        this.merge(values);
+
+        this.state = EntityState.Unchanged;
+
+        this._key = getKey(this.entity, this.type);
+    }
+
+    private merge(values) {
         if (values) {
             for (let p in values) {
                 this.entity[p] = values[p];
             }
-        }
-
-        if (state != null) {
-            this.state = state;
         }
     }
 

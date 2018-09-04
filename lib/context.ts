@@ -94,7 +94,16 @@ export abstract class Context {
     }
 
     saveChanges(): PromiseLike<SaveResult> {
-        return this.saveEntries(this.detectChanges());
+        const changes = this.detectChanges();
+        return this.saveEntries(changes)
+            .then(sr => {
+                changes.forEach((c, i) => {
+                    const uv = sr && sr.updatedEntities && sr.updatedEntities.find(v => v.index === i);
+                    c.accept(uv && uv.values);
+                });
+
+                return sr;
+            });
     }
 
     abstract saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult>;
