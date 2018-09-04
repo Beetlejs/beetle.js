@@ -10,7 +10,7 @@ import { getTypeName } from '../helper';
 
 export class BeetleContext extends Context {
 
-    constructor(metadata: MetadataManager, private readonly ajaxProvider?: IAjaxProvider) {
+    constructor(metadata?: MetadataManager, private readonly ajaxProvider?: IAjaxProvider) {
         super(metadata);
     }
 
@@ -41,16 +41,13 @@ export class BeetleContext extends Context {
         params = params || [];
         let opt: BeetleQueryOptions = {};
         let data = {};
+        let headers = {};
 
         if (options) {
             options.forEach(o => {
-                if (o.params) {
-                    params = params.concat(o.params);
-                }
-
-                if (o.data) {
-                    data = Object.assign(data, o.data);
-                }
+                params = params.concat(o.params);
+                data = Object.assign(data, o.data);
+                headers = Object.assign(headers, o.headers);
 
                 opt = Object.assign(opt, o);
             });

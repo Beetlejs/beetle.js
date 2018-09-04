@@ -56,6 +56,14 @@ export class EntityStore<T extends IEntity> {
     }
 
     stateChanged(entry: EntityEntry, oldState: EntityState) {
+        if (entry.state === EntityState.Detached) {
+            this.entities.splice(this.entities.indexOf(entry.entity));
+            this.allEntries.delete(entry);
+
+            if (entry.key) {
+                this.entries.delete(entry.key);
+            }
+        }
     }
 
     keyChanged(entry: EntityEntry, oldKey: string) {

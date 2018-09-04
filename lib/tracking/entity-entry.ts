@@ -1,6 +1,6 @@
 import { IEntity } from "../types";
 import { EntityState } from "./entity-state";
-import { EntityType } from "../metadata";
+import { EntityType, NavigationProperty } from "../metadata";
 import { getKey } from '../helper';
 
 export interface EntityEntryEvents {
@@ -11,7 +11,7 @@ export interface EntityEntryEvents {
 export class EntityEntry<T extends IEntity = any> {
 
     constructor(public readonly entity: T, state = EntityState.Added,
-        public readonly type?: EntityType, private callbacks?: EntityEntryEvents) {
+                public readonly type?: EntityType, private callbacks?: EntityEntryEvents) {
         this._key = getKey(entity, type);
         this._state = state;
     }
@@ -22,7 +22,7 @@ export class EntityEntry<T extends IEntity = any> {
     }
     set state(value) {
         if (value === this.state) return;
-        
+
         if (value === EntityState.Unchanged) {
             this._originalValues = getOriginalValues(this.entity, this.type);
         }
@@ -54,12 +54,12 @@ export class EntityEntry<T extends IEntity = any> {
 
         if (state != null) {
             this.state = state;
-        } 
+        }
     }
 
     clearNavigations() {
         if (!this.type) return;
-        
+
         this.type.navigationProperties.forEach(n => {
             if (n.isScalar) {
                 this.entity[n.name] = null;
@@ -72,7 +72,7 @@ export class EntityEntry<T extends IEntity = any> {
 
     detectChanges() {
         if (this.state !== EntityState.Unchanged) return;
-        
+
         if (this.type) {
             for (let dp of this.type.dataProperties.values()) {
                 if (this.entity[dp.name] !== this.originalValues[dp.name]) {

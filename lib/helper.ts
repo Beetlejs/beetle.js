@@ -23,3 +23,8 @@ export function getClassName<T>(type: Ctor<T>) {
 export function getForeignKey() {
 
 }
+
+export function combine<T = {[key: string]: string} | []>(src: T, dest: T) {
+}
+
+combine([], {});
