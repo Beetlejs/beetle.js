@@ -1,4 +1,6 @@
-import { MergeStrategy } from "./tracking/merge-strategy";
+import { IQuery } from "jinqu";
+import { QueryOptions } from "linquest";
+import { MergeStrategy, EntityEntry } from "./tracking";
 
 export interface IEntity {
     $type: string;
@@ -9,8 +11,15 @@ export class EntityBase implements IEntity {
     static $type: string;
 }
 
-export interface QueryOptions {
+export interface BeetleQueryOptions extends QueryOptions {
     merge?: MergeStrategy;
+}
+
+export interface IEntitySet<T extends IEntity> {
+    readonly local: IQuery<T>;
+    asNoTracking();
+    add(entity:  T): EntityEntry<T>;
+    attach(entity:  T): EntityEntry<T>;
 }
 
 export interface SaveResult {

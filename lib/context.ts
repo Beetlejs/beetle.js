@@ -1,17 +1,85 @@
-import { Ctor } from "jinqu";
-import { IEntity, SaveResult, EntityBase } from "./types";
-import { EntityEntry, EntityStore, EntityState } from "./tracking";
-import { MetadataManager, NavigationProperty } from "./metadata";
-import { MergeStrategy } from "./tracking/merge-strategy";
+import { createRefs } from 'circular-ref-fix';
+import { AjaxOptions, IAjaxProvider, Ctor, QueryParameter, IRequestProvider } from "jinqu";
 import { getTypeName } from './helper';
+import { MetadataManager, NavigationProperty } from "./metadata";
+import { IEntity, EntityBase, BeetleQueryOptions, SaveResult, IEntitySet } from "./types";
+import { MergeStrategy, EntityEntry, EntityStore, EntityState } from "./tracking";
+import { FetchAjaxProvider, mergeQueryOptions } from 'linquest';
 
-export abstract class Context {
+export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions> implements IRequestProvider<TOptions> {
 
-    constructor(protected readonly metadata?: MetadataManager) {
+    constructor(protected readonly metadata?: MetadataManager, protected readonly ajaxProvider: IAjaxProvider = new FetchAjaxProvider()) {
         this.configure()
     }
 
     private _stores: Map<string, EntityStore<any>>;
+
+    configure() {
+    }
+
+    add(entity: IEntity) {
+        this.mergeEntities(entity, EntityState.Added);
+    }
+
+    attach(entity: IEntity) {
+        this.mergeEntities(entity);
+    }
+
+    request<TResult>(params: QueryParameter[], options: TOptions[]): PromiseLike<TResult> {
+        const o = this.mergeOptions(params, options);
+        return this.ajaxProvider.ajax<TResult>(o)
+            .then(d => {
+                if (o.merge !== MergeStrategy.NoTracking) {
+                    this.mergeEntities(<any>d, EntityState.Unchanged, o.merge);
+                }
+
+                return d;
+            });
+    }
+
+    detectChanges() {
+        const changes: EntityEntry[] = [];
+
+        for (let s of this._stores.values()) {
+            for (let e of s.allEntries) {
+                e.detectChanges();
+                
+                if (e.isChanged()) {
+                    changes.push(e);
+                }
+            }
+        }
+
+        return changes;
+    }
+
+    saveChanges(options?: BeetleQueryOptions): PromiseLike<SaveResult> {
+        const changes = this.detectChanges();
+        return this.saveEntries(changes, options)
+            .then(sr => {
+                changes.forEach((c, i) => {
+                    const uv = sr && sr.updatedEntities && sr.updatedEntities.find(v => v.index === i);
+                    c.accept(uv && uv.values);
+                });
+
+                return sr;
+            });
+    }
+
+    saveEntries(entries: EntityEntry[], options?: BeetleQueryOptions): PromiseLike<SaveResult> {
+        if (!entries || !entries.length)
+            return Promise.resolve<SaveResult>({ affectedCount: 0 });
+
+        const pkg = entries.map(e => Object.assign(e.getTrackingInfo(), e.entity));
+        const safePkg = createRefs(pkg);
+        const o: AjaxOptions = {
+            data: JSON.stringify(safePkg),
+            method: 'POST',
+            url: 'SaveChanges'
+        };
+
+        return this.ajaxProvider.ajax(this.mergeOptions([], [options, o]));
+    }
 
     protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T> {
         const t = getTypeName(type);
@@ -66,45 +134,17 @@ export abstract class Context {
     protected fixNavigation(entry: EntityEntry, navigation: NavigationProperty) {
     }
 
-    configure() {
+    protected mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]) {
+        let opt = <BeetleQueryOptions>{};
+
+        (options || []).forEach(o => {
+            opt = mergeQueryOptions(opt, o);
+            opt.merge = o.merge || opt.merge;
+        });
+        opt.params = (opt.params || []).concat(params || []);
+
+        return opt;
     }
 
-    add(entity: IEntity) {
-        this.mergeEntities(entity, EntityState.Added);
-    }
-
-    attach(entity: IEntity) {
-        this.mergeEntities(entity);
-    }
-
-    detectChanges() {
-        const changes: EntityEntry[] = [];
-
-        for (let s of this._stores.values()) {
-            for (let e of s.allEntries) {
-                e.detectChanges();
-                
-                if (e.isChanged()) {
-                    changes.push(e);
-                }
-            }
-        }
-
-        return changes;
-    }
-
-    saveChanges(): PromiseLike<SaveResult> {
-        const changes = this.detectChanges();
-        return this.saveEntries(changes)
-            .then(sr => {
-                changes.forEach((c, i) => {
-                    const uv = sr && sr.updatedEntities && sr.updatedEntities.find(v => v.index === i);
-                    c.accept(uv && uv.values);
-                });
-
-                return sr;
-            });
-    }
-
-    abstract saveEntries(entries: EntityEntry[]): PromiseLike<SaveResult>;
+    abstract set<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): IEntitySet<T>;
 }
