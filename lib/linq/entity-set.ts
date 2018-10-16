@@ -1,8 +1,7 @@
-import { IQuery, IRequestProvider } from "jinqu";
-import { QueryOptions, LinqQuery, LinqQueryProvider } from "linquest";
+import { IQuery } from "jinqu";
+import { LinqQuery, LinqQueryProvider } from "linquest";
 import { IEntity, BeetleQueryOptions, IEntitySet } from "../types";
 import { EntityStore, EntityState, MergeStrategy } from "../tracking";
-import { Context } from "../context";
 
 export class EntitySet<T extends IEntity> extends LinqQuery<T, BeetleQueryOptions> implements IEntitySet<T> {
 

@@ -1,7 +1,6 @@
 import { Ctor } from "jinqu";
 import { EntityType, EntityBuilder } from "./entity-type";
 import { IEntity, EntityBase } from "../types";
-import { getTypeName } from "../helper";
 
 export class MetadataManager {
     private types: Map<string, EntityType> = new Map();

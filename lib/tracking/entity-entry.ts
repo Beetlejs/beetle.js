@@ -1,6 +1,6 @@
 import { IEntity } from "../types";
 import { EntityState } from "./entity-state";
-import { EntityType, NavigationProperty } from "../metadata";
+import { EntityType } from "../metadata";
 import { getKey } from '../helper';
 
 export interface EntityEntryEvents {
