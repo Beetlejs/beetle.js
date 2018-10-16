@@ -10,7 +10,7 @@ export interface EntityEntryEvents {
 export class EntityEntry<T extends IEntity = any> {
 
     constructor(public readonly entity: T, state = EntityState.Added,
-                public readonly type?: EntityType, private callbacks?: EntityEntryEvents) {
+        public readonly type?: EntityType, private callbacks?: EntityEntryEvents) {
         this._key = getKey(entity, type);
         this.state = state;
     }
@@ -23,12 +23,12 @@ export class EntityEntry<T extends IEntity = any> {
         if (value === this.state) return;
 
         if (value === EntityState.Unchanged) {
-            this._originalValues = getOriginalValues(this.entity, this.type);
+            this._originalValues = getOriginalValues(this.entity);
         }
 
         const os = this.state;
-        this.state = value;
-        
+        this._state = value;
+
         if (this.callbacks.stateChanged) {
             this.callbacks.stateChanged(this, os);
         }
@@ -45,6 +45,10 @@ export class EntityEntry<T extends IEntity = any> {
     }
 
     isChanged() {
+        if (this._state === EntityState.Unchanged) {
+            this.detectChanges();
+        }
+
         return this._state !== EntityState.Detached && this._state !== EntityState.Unchanged;
     }
 
@@ -52,7 +56,7 @@ export class EntityEntry<T extends IEntity = any> {
         this.merge(values);
     }
 
-    accept(values?) {
+    accept(values?) {
         this.merge(values);
 
         this.state = EntityState.Unchanged;
@@ -81,23 +85,13 @@ export class EntityEntry<T extends IEntity = any> {
         });
     }
 
-    detectChanges() {
+    detectChanges() {
         if (this.state !== EntityState.Unchanged) return;
 
-        if (this.type) {
-            for (let dp of this.type.dataProperties.values()) {
-                if (this.entity[dp.name] !== this.originalValues[dp.name]) {
-                    this.state = EntityState.Modified;
-                    return;
-                }
-            }
-        }
-        else {
-            for (let [k, v] of this.originalValues.entries()) {
-                if (this.entity[k] !== v) {
-                    this.state = EntityState.Modified;
-                    return;
-                }
+        for (let [k, v] of this.originalValues.entries()) {
+            if (this.entity[k] !== v) {
+                this.state = EntityState.Modified;
+                return;
             }
         }
     }
@@ -110,18 +104,12 @@ export class EntityEntry<T extends IEntity = any> {
     }
 }
 
-function getOriginalValues(entity, type: EntityType) {
+function getOriginalValues(entity) {
     const m = new Map();
-    if (type) {
-        type.dataProperties.forEach(p => {
-            m[p.name] = entity[p.name];
-        });
-    } else {
-        for (let p in entity) {
-            const v = entity[p];
-            if (v == null || v instanceof Date || v !== Object(v)) {
-                m[p] = v;
-            }
+    for (let p in entity) {
+        const v = entity[p];
+        if (v == null || v instanceof Date || v !== Object(v)) {
+            m.set(p, v);
         }
     }
 

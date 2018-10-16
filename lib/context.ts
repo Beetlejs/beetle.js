@@ -6,15 +6,30 @@ import { IEntity, EntityBase, BeetleQueryOptions, SaveResult, IEntitySet } from 
 import { MergeStrategy, EntityEntry, EntityStore, EntityState } from "./tracking";
 import { FetchAjaxProvider, mergeQueryOptions } from 'linquest';
 
-export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions> implements IRequestProvider<TOptions> {
+export interface ContextOptions {
+    baseAddress?: string;
+    metadata?: MetadataManager;
+    ajaxProvider?: IAjaxProvider;
+}
 
-    constructor(protected readonly metadata?: MetadataManager, protected readonly ajaxProvider: IAjaxProvider = new FetchAjaxProvider()) {
+export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions> implements IRequestProvider<BeetleQueryOptions> {
+
+    constructor(options: ContextOptions = {}) {
+        this.baseAddress = options.baseAddress;
+        this.metadata = options.metadata;
+        this.ajaxProvider = options.ajaxProvider || new FetchAjaxProvider();
+        this._stores = new Map<string, EntityStore<any>>();
+
         this.configure()
     }
 
-    private _stores: Map<string, EntityStore<any>>;
+    protected readonly defaultOptions: BeetleQueryOptions = {};
+    protected readonly baseAddress: string;
+    protected readonly metadata: MetadataManager;
+    protected readonly ajaxProvider: IAjaxProvider;
+    private readonly _stores: Map<string, EntityStore<any>>;
 
-    configure() {
+    protected configure() {
     }
 
     add(entity: IEntity) {
@@ -42,8 +57,6 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
 
         for (let s of this._stores.values()) {
             for (let e of s.allEntries) {
-                e.detectChanges();
-                
                 if (e.isChanged()) {
                     changes.push(e);
                 }
@@ -83,37 +96,40 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
 
     protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T> {
         const t = getTypeName(type);
-        
-        if (!this._stores.has(t))
-            return this._stores[t] = new EntityStore<T>(this, this.metadata.getType(t));
-        return this._stores[t];
+
+        if (!this._stores.has(t)) {
+            const store = new EntityStore<T>(this, this.metadata && this.metadata.getType(t));
+            this._stores.set(t, store);
+            return store;
+        }
+
+        return this._stores.get(t);
     }
 
-    protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
+    private mergeInternal(entities: IEntity[] | IEntity, state: EntityState, merge: MergeStrategy) {
+        if (!entities) return;
 
-        function mg(es: IEntity[] | IEntity, s: EntityState, m: MergeStrategy) {
-            if (!es) return;
+        if (!(entities instanceof Array)) {
+            entities = [entities];
+        }
 
-            if (!(es instanceof Array)) {
-                es = [es];
-            }
+        for (const e of entities) {
+            if (!e.$type) continue;
 
-            for (const e of es) {
-                if (!e.$type) continue;
-                    
-                const store = this.store(e.$type);
-                store.merge(e, state, merge);
+            const store = this.store(e.$type);
+            store.merge(e, state, merge);
 
-                for (let k of Object.keys(e)) {
-                    const v = e[k];
-                    if (!(v instanceof Date) && v !== Object(v)) {
-                        mg(v, s, m);
-                    }
+            for (let k of Object.keys(e)) {
+                const v = e[k];
+                if (!(v instanceof Date) && v !== Object(v) && k[0] !== '$') {
+                    this.mergeInternal(v, state, merge);
                 }
             }
         }
-
-        mg(entities, state, merge);
+    }
+    
+    protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
+        this.mergeInternal(entities, state, merge);
         this.fixNavigations();
     }
 
@@ -135,16 +151,24 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
     }
 
     protected mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]) {
-        let opt = <BeetleQueryOptions>{};
+        const d = Object.assign({}, this.defaultOptions);
+        const o = (options || []).reduce(mergeBeetleQueryOptions, d);
+        if (this.baseAddress) {
+            if (this.baseAddress[this.baseAddress.length - 1] !== '/' && o.url && o.url[0] !== '/') {
+                o.url = '/' + o.url;
+            }
+            o.url = this.baseAddress + (o.url || '');
+        }
+        o.params = (params || []).concat(o.params || []);
 
-        (options || []).forEach(o => {
-            opt = mergeQueryOptions(opt, o);
-            opt.merge = o.merge || opt.merge;
-        });
-        opt.params = (opt.params || []).concat(params || []);
-
-        return opt;
+        return o;
     }
 
-    abstract set<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): IEntitySet<T>;
+    abstract set<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string, path: string): IEntitySet<T>;
+}
+
+export function mergeBeetleQueryOptions(o1: BeetleQueryOptions, o2: BeetleQueryOptions) {
+    const o: BeetleQueryOptions = mergeQueryOptions(o1, o2);
+    o.merge = o2.merge || o1.merge;
+    return o;
 }

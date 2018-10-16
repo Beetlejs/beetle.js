@@ -44,7 +44,7 @@ export class EntityStore<T extends IEntity> {
             }
 
             entry = new EntityEntry(entity, state, this.type, this);
-            this.entries[key] = entry;
+            this.entries.set(key, entry);
         }
         else {
             entry = new EntityEntry(entity, state, this.type, this);
@@ -69,7 +69,7 @@ export class EntityStore<T extends IEntity> {
 
     keyChanged(entry: EntityEntry, oldKey: string) {
         if (!oldKey && entry.key) {
-            this.entries[entry.key] = entry;
+            this.entries.set(entry.key, entry);
         }
     }
 }

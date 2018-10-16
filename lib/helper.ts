@@ -1,4 +1,4 @@
-import { Ctor } from "jinqu";
+import { Ctor, QueryPart, AjaxFuncs, PartArgument } from "jinqu";
 import { EntityType } from "./metadata";
 import { IEntity, EntityBase } from "./types";
 
@@ -24,4 +24,13 @@ export function getForeignKey() {
 }
 
 export function combine<T = {[key: string]: string} | []>(src: T, dest: T) {
+}
+
+export function createBaseParts(url: string) {
+    return [
+        QueryPart.create(
+            AjaxFuncs.options,
+            [PartArgument.literal({ url: url })]
+        )
+    ]
 }
