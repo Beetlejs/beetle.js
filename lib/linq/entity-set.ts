@@ -2,11 +2,12 @@ import { IQuery, IRequestProvider } from "jinqu";
 import { QueryOptions, LinqQuery, LinqQueryProvider } from "linquest";
 import { IEntity, BeetleQueryOptions, IEntitySet } from "../types";
 import { EntityStore, EntityState, MergeStrategy } from "../tracking";
+import { Context } from "../context";
 
 export class EntitySet<T extends IEntity> extends LinqQuery<T, BeetleQueryOptions> implements IEntitySet<T> {
 
-    constructor(private readonly store: EntityStore<T>, requestProvider: IRequestProvider<BeetleQueryOptions>) {
-        super(new LinqQueryProvider(requestProvider));
+    constructor(private readonly store: EntityStore<T>) {
+        super(new LinqQueryProvider(store.context));
 
         this.local = store.local;
     }

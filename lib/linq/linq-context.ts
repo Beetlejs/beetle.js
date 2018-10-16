@@ -20,6 +20,6 @@ export class BeetleLinqContext extends Context {
         if (this._sets.has(t))
             return this._sets[t];
 
-        return this._sets[t] = new EntitySet<T>(this.store<T>(t), { request: (p, os) => this.request(p, os) });
+        return this._sets[t] = new EntitySet<T>(this.store<T>(t));
     }
 }

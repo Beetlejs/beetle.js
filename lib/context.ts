@@ -85,7 +85,7 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
         const t = getTypeName(type);
         
         if (!this._stores.has(t))
-            return this._stores[t] = new EntityStore<T>(this.metadata.getType(t));
+            return this._stores[t] = new EntityStore<T>(this, this.metadata.getType(t));
         return this._stores[t];
     }
 
