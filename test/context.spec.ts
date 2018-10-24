@@ -20,7 +20,7 @@ describe('Service tests', () => {
         const result = await context.companies.toArrayAsync();
 
         expect(result).to.not.equal(companies);
-        expect(result).to.deep.equal(companies);
+        expect(JSON.stringify(result)).to.equal(JSON.stringify(companies));
 
         fetchMock.restore();
     });

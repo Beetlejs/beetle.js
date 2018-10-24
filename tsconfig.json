@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
       "target": "es5",
-      "module": "umd",
+      "module": "commonjs",
       "moduleResolution": "node",
       "sourceMap": true,
       "outDir": "./dist",
@@ -9,8 +9,7 @@
       "downlevelIteration": true,
       "lib": [
         "es2015",
-        "dom",
-        "esnext.asynciterable"
+        "dom"
       ]
     },
     "compileOnSave": true,
