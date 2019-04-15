@@ -1,7 +1,7 @@
 import { Ctor } from "jinqu";
 import { NavigationProperty } from "./navigation-property";
 import { MetadataManager } from "./metadata-manager";
-import { IEntity, EntityBase } from "../types";
+import { IEntity, EntityBase } from "../shared";
 
 export class EntityType {
 

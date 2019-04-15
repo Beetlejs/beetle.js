@@ -1,6 +1,6 @@
 import { IQuery } from "jinqu";
 import { LinqQuery, LinqQueryProvider } from "linquest";
-import { IEntity, BeetleQueryOptions, IEntitySet } from "../types";
+import { IEntity, BeetleQueryOptions, IEntitySet } from "../shared";
 import { EntityStore, EntityState, MergeStrategy } from "../tracking";
 import { createBaseParts } from "../helper";
 

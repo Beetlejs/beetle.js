@@ -1,6 +1,6 @@
 import { Ctor, QueryPart, AjaxFuncs, PartArgument } from "jinqu";
 import { EntityType } from "./metadata";
-import { IEntity, EntityBase } from "./types";
+import { IEntity, EntityBase } from "./shared";
 
 export function getKey(entity, type: EntityType) {
     if (type)

@@ -1,4 +1,4 @@
-import { IEntity } from "../types";
+import { IEntity } from "../shared";
 import { EntityType } from "../metadata";
 import { EntityEntry } from "./entity-entry";
 import { EntityState } from "./entity-state";

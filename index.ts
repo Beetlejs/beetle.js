@@ -4,4 +4,4 @@ export * from './lib/linq';
 export * from './lib/metadata';
 export * from './lib/metadata';
 export * from './lib/tracking';
-export * from './lib/types';
+export * from './lib/shared';

@@ -2,22 +2,24 @@ import { createRefs } from 'circular-ref-fix';
 import { AjaxOptions, IAjaxProvider, Ctor, QueryParameter, IRequestProvider } from "jinqu";
 import { getTypeName } from './helper';
 import { MetadataManager, NavigationProperty } from "./metadata";
-import { IEntity, EntityBase, BeetleQueryOptions, SaveResult, IEntitySet } from "./types";
+import { IEntity, EntityBase, BeetleQueryOptions, SaveResult, IEntitySet } from "./shared";
 import { MergeStrategy, EntityEntry, EntityStore, EntityState } from "./tracking";
-import { FetchAjaxProvider, mergeQueryOptions } from 'linquest';
+import { mergeQueryOptions } from 'linquest';
+import { FetchProvider } from 'jinqu-fetch';
 
-export interface ContextOptions {
+export interface ContextOptions<TResponse> {
     baseAddress?: string;
     metadata?: MetadataManager;
-    ajaxProvider?: IAjaxProvider;
+    ajaxProvider?: IAjaxProvider<TResponse>;
 }
 
-export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions> implements IRequestProvider<BeetleQueryOptions> {
+export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions, TResponse = Response>
+    implements IRequestProvider<BeetleQueryOptions> {
 
-    constructor(options: ContextOptions = {}) {
+    constructor(options: ContextOptions<TResponse> = {}) {
         this.baseAddress = options.baseAddress;
         this.metadata = options.metadata;
-        this.ajaxProvider = options.ajaxProvider || new FetchAjaxProvider();
+        this.ajaxProvider = options.ajaxProvider || <any>new FetchProvider();
         this._stores = new Map<string, EntityStore<any>>();
 
         this.configure()
@@ -26,7 +28,7 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
     protected readonly defaultOptions: BeetleQueryOptions = {};
     protected readonly baseAddress: string;
     protected readonly metadata: MetadataManager;
-    protected readonly ajaxProvider: IAjaxProvider;
+    protected readonly ajaxProvider: IAjaxProvider<TResponse>;
     private readonly _stores: Map<string, EntityStore<any>>;
 
     protected configure() {

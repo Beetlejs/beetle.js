@@ -1,7 +1,7 @@
 import { Ctor } from 'jinqu';
 import { Context } from "../context";
 import { getTypeName } from '../helper';
-import { IEntity, EntityBase } from '../types';
+import { IEntity, EntityBase } from '../shared';
 import { EntitySet } from "./entity-set";
 
 export class BeetleLinqContext extends Context {
