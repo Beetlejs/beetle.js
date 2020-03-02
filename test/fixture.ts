@@ -1,5 +1,5 @@
 import { BeetleLinqContext } from '..';
-import { EntityBase, IEntity } from '../lib/types';
+import { EntityBase, IEntity } from '../lib/shared';
 
 export interface Address extends IEntity {
     id: number;
@@ -26,7 +26,7 @@ export class Company extends EntityBase {
 export class TestContext extends BeetleLinqContext {
 
     constructor() {
-        super({ baseAddress: 'api' });
+        super('api');
     }
 
     companies = this.set(Company, 'Companies');

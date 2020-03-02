@@ -19,7 +19,7 @@ export abstract class Context<
     constructor(options: ContextOptions<TServiceOptions> = {}) {
         this.metadata = options.metadata;
         this.requestProvider = options.requestProvider || <any>new LinqService();
-        this._stores = new Map<string, EntityStore<any>>();
+        this._stores = new Map<string, EntityStore<any, TOptions>>();
 
         this.configure()
     }
@@ -27,7 +27,7 @@ export abstract class Context<
     protected readonly defaultOptions: BeetleQueryOptions = {};
     protected readonly metadata: MetadataManager;
     protected readonly requestProvider: IRequestProvider<TOptions>;
-    private readonly _stores: Map<string, EntityStore<any>>;
+    private readonly _stores: Map<string, EntityStore<any, TOptions>>;
 
     protected configure() {
     }
@@ -102,11 +102,11 @@ export abstract class Context<
         return this.requestProvider.request<SaveResult, TExtra>([], opt);
     }
 
-    protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T> {
+    protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T, TOptions> {
         const t = getTypeName(type);
 
         if (!this._stores.has(t)) {
-            const store = new EntityStore<T>(this.metadata && this.metadata.getType(t));
+            const store = new EntityStore<T, TOptions>(this, this.metadata && this.metadata.getType(t));
             this._stores.set(t, store);
             return store;
         }
