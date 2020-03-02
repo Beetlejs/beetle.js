@@ -15,9 +15,9 @@ export interface BeetleQueryOptions extends QueryOptions {
     merge?: MergeStrategy;
 }
 
-export interface IEntitySet<T extends IEntity> {
+export interface IEntitySet<T extends IEntity> extends IQuery<T> {
     readonly local: IQuery<T>;
-    asNoTracking();
+    asNoTracking(): IQuery<T>;
     add(entity:  T): EntityEntry<T>;
     attach(entity:  T): EntityEntry<T>;
 }

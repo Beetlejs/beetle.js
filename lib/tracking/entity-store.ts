@@ -4,12 +4,11 @@ import { EntityEntry } from "./entity-entry";
 import { EntityState } from "./entity-state";
 import { MergeStrategy } from "./merge-strategy";
 import { IQuery } from "jinqu";
-import { Context } from "../context";
 import { getKey } from "../helper";
 
 export class EntityStore<T extends IEntity> {
 
-    constructor(public readonly context: Context, private readonly type?: EntityType) {
+    constructor(private readonly type?: EntityType) {
         this.entities = [];
         this.entries = new Map<string, EntityEntry<T>>();
         this.allEntries = new Set<EntityEntry<T>>();

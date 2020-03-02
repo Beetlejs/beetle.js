@@ -1,34 +1,30 @@
 import { createRefs } from 'circular-ref-fix';
-import { AjaxOptions, IAjaxProvider, Ctor, QueryParameter, IRequestProvider } from "jinqu";
+import { AjaxOptions, IAjaxProvider, Ctor, QueryParameter, IRequestProvider, AjaxResponse, Result } from "jinqu";
 import { getTypeName } from './helper';
 import { MetadataManager, NavigationProperty } from "./metadata";
 import { IEntity, EntityBase, BeetleQueryOptions, SaveResult, IEntitySet } from "./shared";
 import { MergeStrategy, EntityEntry, EntityStore, EntityState } from "./tracking";
-import { mergeQueryOptions } from 'linquest';
-import { FetchProvider } from 'jinqu-fetch';
+import { mergeQueryOptions, LinqService } from 'linquest';
 
-export interface ContextOptions<TResponse> {
-    baseAddress?: string;
+export interface ContextOptions<TServiceOptions extends AjaxOptions> {
     metadata?: MetadataManager;
-    ajaxProvider?: IAjaxProvider<TResponse>;
+    requestProvider?: IRequestProvider<TServiceOptions>;
 }
 
-export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryOptions, TResponse = Response>
+export abstract class Context<TServiceOptions extends AjaxOptions, TOptions extends TServiceOptions & BeetleQueryOptions>
     implements IRequestProvider<BeetleQueryOptions> {
 
-    constructor(options: ContextOptions<TResponse> = {}) {
-        this.baseAddress = options.baseAddress;
+    constructor(options: ContextOptions<TServiceOptions> = {}) {
         this.metadata = options.metadata;
-        this.ajaxProvider = options.ajaxProvider || <any>new FetchProvider();
+        this.requestProvider = options.requestProvider || <any>new LinqService();
         this._stores = new Map<string, EntityStore<any>>();
 
         this.configure()
     }
 
     protected readonly defaultOptions: BeetleQueryOptions = {};
-    protected readonly baseAddress: string;
     protected readonly metadata: MetadataManager;
-    protected readonly ajaxProvider: IAjaxProvider<TResponse>;
+    protected readonly requestProvider: IRequestProvider<TOptions>;
     private readonly _stores: Map<string, EntityStore<any>>;
 
     protected configure() {
@@ -42,12 +38,15 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
         this.mergeEntities(entity);
     }
 
-    request<TResult>(params: QueryParameter[], options: TOptions[]): PromiseLike<TResult> {
-        const o = this.mergeOptions(params, options);
-        return this.ajaxProvider.ajax<TResult>(o)
+    request<TResult, TExtra = {}>(params: QueryParameter[], options: TOptions[]) {
+        const o = <TOptions>this.mergeOptions(params, options);
+        return this.requestProvider.request<TResult, TExtra>(params, [o])
             .then(d => {
+                const dr = d as any;
+                const result = (dr && dr.value) || dr;
+
                 if (o.merge !== MergeStrategy.NoTracking) {
-                    this.mergeEntities(<any>d, EntityState.Unchanged, o.merge);
+                    this.mergeEntities(<any>result, EntityState.Unchanged, o.merge);
                 }
 
                 return d;
@@ -68,22 +67,26 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
         return changes;
     }
 
-    saveChanges(options?: BeetleQueryOptions): PromiseLike<SaveResult> {
+    saveChanges<TExtra = {}>(options?: TOptions) {
         const changes = this.detectChanges();
-        return this.saveEntries(changes, options)
-            .then(sr => {
+        return this.saveEntries<TExtra>(changes, options)
+            .then(d => {
+                const dr = d as any;
+                const sr: SaveResult = (dr && dr.value) || dr;
                 changes.forEach((c, i) => {
                     const uv = sr && sr.updatedEntities && sr.updatedEntities.find(v => v.index === i);
-                    c.accept(uv && uv.values);
+                    if (uv) {
+                        c.accept(uv && uv.values);
+                    }
                 });
 
                 return sr;
             });
     }
 
-    saveEntries(entries: EntityEntry[], options?: BeetleQueryOptions): PromiseLike<SaveResult> {
+    saveEntries<TExtra = {}>(entries: EntityEntry[], options?: TOptions) {
         if (!entries || !entries.length)
-            return Promise.resolve<SaveResult>({ affectedCount: 0 });
+            return Promise.resolve<Result<SaveResult, TExtra>>(<any>{ affectedCount: 0, value: { affectedCount: 0 } });
 
         const pkg = entries.map(e => Object.assign(e.getTrackingInfo(), e.entity));
         const safePkg = createRefs(pkg);
@@ -93,14 +96,15 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
             url: 'SaveChanges'
         };
 
-        return this.ajaxProvider.ajax(this.mergeOptions([], [options, o]));
+        const opt = [this.mergeOptions([], [options, o])] as any;
+        return this.requestProvider.request<SaveResult, TExtra>([], opt);
     }
 
     protected store<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string): EntityStore<T> {
         const t = getTypeName(type);
 
         if (!this._stores.has(t)) {
-            const store = new EntityStore<T>(this, this.metadata && this.metadata.getType(t));
+            const store = new EntityStore<T>(this.metadata && this.metadata.getType(t));
             this._stores.set(t, store);
             return store;
         }
@@ -132,18 +136,18 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
     
     protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
         this.mergeInternal(entities, state, merge);
-        this.fixNavigations();
+        this.fixRelations();
     }
 
-    protected fixNavigations() {
+    protected fixRelations() {
         this._stores.forEach(s => {
             for (let e of s.allEntries) {
-                this.fixEntryNavigations(e);
+                this.fixEntryRelations(e);
             }
         });
     }
 
-    protected fixEntryNavigations(entry: EntityEntry) {
+    protected fixEntryRelations(entry: EntityEntry) {
         if (entry.type == null) return;
 
         entry.type.navigationProperties.forEach(n => this.fixNavigation(entry, n));
@@ -155,12 +159,6 @@ export abstract class Context<TOptions extends BeetleQueryOptions = BeetleQueryO
     protected mergeOptions(params: QueryParameter[], options: BeetleQueryOptions[]) {
         const d = Object.assign({}, this.defaultOptions);
         const o = (options || []).reduce(mergeBeetleQueryOptions, d);
-        if (this.baseAddress) {
-            if (this.baseAddress[this.baseAddress.length - 1] !== '/' && o.url && o.url[0] !== '/') {
-                o.url = '/' + o.url;
-            }
-            o.url = this.baseAddress + (o.url || '');
-        }
         o.params = (params || []).concat(o.params || []);
 
         return o;
