@@ -1,14 +1,22 @@
-import { Ctor } from 'jinqu';
-import { Context } from "../context";
+import { Ctor, AjaxOptions, IRequestProvider } from 'jinqu';
+import { Context, ContextOptions } from "../context";
 import { getTypeName } from '../helper';
-import { IEntity, EntityBase } from '../shared';
+import { IEntity, EntityBase, BeetleQueryOptions } from '../shared';
 import { EntitySet } from "./entity-set";
 
-export class BeetleLinqContext extends Context {
+export class BeetleLinqContext<
+    TServiceOptions extends AjaxOptions = AjaxOptions,
+    TOptions extends TServiceOptions & BeetleQueryOptions = TServiceOptions & BeetleQueryOptions>
+    extends Context<TServiceOptions, TOptions>
+    implements IRequestProvider<BeetleQueryOptions> {
+
+    constructor(options: ContextOptions<TServiceOptions> = {}) {
+        super(options);
+    }
 
     private readonly _sets: Map<string, EntitySet<any>> = new Map<string, EntitySet<any>>();
 
-    set<T extends IEntity>(type: (typeof EntityBase & Ctor<T>) | string, path: string): EntitySet<T> {
+    set<T extends IEntity, TResponse>(type: (typeof EntityBase & Ctor<T>) | string, path: string): EntitySet<T> {
         const t = getTypeName(type);
 
         if (this._sets.has(t))

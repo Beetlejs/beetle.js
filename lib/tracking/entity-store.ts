@@ -3,12 +3,12 @@ import { EntityType } from "../metadata";
 import { EntityEntry } from "./entity-entry";
 import { EntityState } from "./entity-state";
 import { MergeStrategy } from "./merge-strategy";
-import { IQuery } from "jinqu";
+import { IQuery, IRequestProvider, AjaxOptions } from "jinqu";
 import { getKey } from "../helper";
 
-export class EntityStore<T extends IEntity> {
+export class EntityStore<T extends IEntity, TOptions extends AjaxOptions> {
 
-    constructor(private readonly type?: EntityType) {
+    constructor(public readonly context: IRequestProvider<TOptions>, private readonly type?: EntityType) {
         this.entities = [];
         this.entries = new Map<string, EntityEntry<T>>();
         this.allEntries = new Set<EntityEntry<T>>();

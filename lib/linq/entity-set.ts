@@ -4,9 +4,9 @@ import { IEntity, BeetleQueryOptions, IEntitySet } from "../shared";
 import { EntityStore, EntityState, MergeStrategy } from "../tracking";
 import { createBaseParts } from "../helper";
 
-export class EntitySet<T extends IEntity> extends LinqQuery<T, BeetleQueryOptions> implements IEntitySet<T> {
+export class EntitySet<T extends IEntity, TResponse> extends LinqQuery<T, BeetleQueryOptions, TResponse> implements IEntitySet<T> {
 
-    constructor(private readonly store: EntityStore<T>, private readonly path: string) {
+    constructor(private readonly store: EntityStore<T, BeetleQueryOptions>, private readonly path: string) {
         super(new LinqQueryProvider(store.context), createBaseParts(path));
 
         this.local = store.local;

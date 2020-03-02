@@ -11,7 +11,9 @@ export interface ContextOptions<TServiceOptions extends AjaxOptions> {
     requestProvider?: IRequestProvider<TServiceOptions>;
 }
 
-export abstract class Context<TServiceOptions extends AjaxOptions, TOptions extends TServiceOptions & BeetleQueryOptions>
+export abstract class Context<
+    TServiceOptions extends AjaxOptions = AjaxOptions,
+    TOptions extends TServiceOptions & BeetleQueryOptions = TServiceOptions & BeetleQueryOptions>
     implements IRequestProvider<BeetleQueryOptions> {
 
     constructor(options: ContextOptions<TServiceOptions> = {}) {
@@ -133,7 +135,7 @@ export abstract class Context<TServiceOptions extends AjaxOptions, TOptions exte
             }
         }
     }
-    
+
     protected mergeEntities(entities: IEntity[] | IEntity, state = EntityState.Unchanged, merge = MergeStrategy.Throw) {
         this.mergeInternal(entities, state, merge);
         this.fixRelations();
